@@ -1,6 +1,8 @@
-enum MessageType {
+#include <stdint.h>
+
+enum MessageType: uint8_t {
     Command = 0,
-    Response = 1
+    Reply = 1
 };
 
 struct Header {
@@ -18,7 +20,7 @@ struct CommandMessage {
     float rudder_angle;
 };
 
-struct ResponseMessage {
+struct ReplyMessage {
     Header header;
     float heading;
     float speed;
