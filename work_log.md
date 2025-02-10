@@ -17,3 +17,6 @@
 - finally got LoRa working on teensy (power rail on breadboard was broken), got successful LoRa communication between the two boards using example code
 
 ## 2/9/25
+- implemented messaging protocol
+- figured out manual library compilation
+- laid out basic state machine control flow and data transmission between boat and basestation

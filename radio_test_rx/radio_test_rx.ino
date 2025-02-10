@@ -6,10 +6,10 @@
 // level messaging abilities.
 // It is designed to work with the other example Arduino9x_TX
 
-#include "messaging.hpp"
 #include <Arduino.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+#include <messaging.hpp>
 
 #define RFM95_CS 10
 #define RFM95_RST 2
@@ -83,12 +83,6 @@ void loop() {
         Serial.println("Received message is too short for header");
         return;
       }
-    //   Serial.println("size of header: ");
-    //   Serial.println(sizeof(Header));
-    //   Serial.println("size of Command: ");
-    //   Serial.println(sizeof(CommandMessage));
-    //   Serial.println("max message length: ");
-    // Serial.println(RH_RF95_MAX_MESSAGE_LEN);
       Header header;
       memcpy(&header, receive_buffer, sizeof(header));
       if (header.type == MessageType::Command) {

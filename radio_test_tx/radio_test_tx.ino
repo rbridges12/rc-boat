@@ -1,7 +1,8 @@
 #include <SPI.h>
 #include <RH_RF95.h>
 #include <Arduino.h>
-#include "messaging.hpp"
+// #include "messaging.hpp"
+#include <messaging.hpp>
 
 #define RFM95_CS 10
 #define RFM95_RST 2
@@ -91,12 +92,6 @@ void loop()
         Serial.println("Received message is too short for header");
         return;
       }
-    //   Serial.println("size of header: ");
-    //   Serial.println(sizeof(Header));
-    //   Serial.println("size of Command: ");
-    //   Serial.println(sizeof(CommandMessage));
-    //   Serial.println("max message length: ");
-    // Serial.println(RH_RF95_MAX_MESSAGE_LEN);
       Header header;
       memcpy(&header, receive_buffer, sizeof(header));
       Serial.println("Received a message:");

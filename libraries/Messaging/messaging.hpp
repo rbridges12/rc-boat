@@ -6,12 +6,12 @@ enum MessageType: uint8_t {
 };
 
 struct Header {
+    uint32_t sequence_number;
+    uint32_t time_sec;
+    uint32_t time_nsec;
     MessageType type;
     uint8_t source_id;
     uint8_t dest_id;
-    uint8_t sequence_number;
-    uint32_t time_sec;
-    uint32_t time_nsec;
 };
 
 struct CommandMessage {
