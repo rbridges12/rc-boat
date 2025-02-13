@@ -102,40 +102,47 @@ void loop() {
         Serial.print(msg.throttle);
         Serial.print(" and rudder angle ");
         Serial.println(msg.rudder_angle);
-      } else if (header.type == MessageType::Reply) {
-        if (len < sizeof(ReplyMessage)) {
-          Serial.println("Received message is too short for ReplyMessage");
-          return;
-        }
-        ReplyMessage msg;
-        memcpy(&msg, receive_buffer, sizeof(msg));
-        Serial.print("Received reply from ");
-        Serial.print(msg.header.source_id);
-        Serial.print(" at ");
-        Serial.print(msg.header.time_sec);
-        Serial.print(".");
-        Serial.print(msg.header.time_nsec);
-        Serial.print(" with heading ");
-        Serial.print(msg.heading);
-        Serial.print(" and speed ");
-        Serial.println(msg.speed);
-      } else {
-        Serial.print("Received message with unknown type ");
-        Serial.println(header.type);
       }
+    //   else if (header.type == MessageType::Reply) {
+    //     if (len < sizeof(ReplyMessage)) {
+    //       Serial.println("Received message is too short for ReplyMessage");
+    //       return;
+    //     }
+    //     ReplyMessage msg;
+    //     memcpy(&msg, receive_buffer, sizeof(msg));
+    //     Serial.print("Received reply from ");
+    //     Serial.print(msg.header.source_id);
+    //     Serial.print(" at ");
+    //     Serial.print(msg.header.time_sec);
+    //     Serial.print(".");
+    //     Serial.print(msg.header.time_nsec);
+    //     Serial.print(" with heading ");
+    //     Serial.print(msg.heading);
+    //     Serial.print(" and speed ");
+    //     Serial.println(msg.speed);
+    //   } else {
+    //     Serial.print("Received message with unknown type ");
+    //     Serial.println(header.type);
+    //   }
       Serial.print("RSSI: ");
       Serial.println(rf95.lastRssi(), DEC);
+    //   Serial.println(sizeof(CommandMessage));
 
       // Send a reply
       ReplyMessage reply = {
-          .header = {.type = MessageType::Reply,
-                     .source_id = DEVICE_ID,
-                     .dest_id = header.source_id,
-                     .sequence_number = sequence_number++,
-                     .time_sec = millis() / 1000,
-                     .time_nsec = (millis() % 1000) * 1000000},
-          .heading = 31.8,
-          .speed = 1.6};
+        .header = {
+            .sequence_number = sequence_number++,
+            .time_sec = millis() / 1000,
+            .time_nsec = millis() % 1000,
+            .type = MessageType::Reply,
+            .source_id = DEVICE_ID,
+            .dest_id = header.source_id,
+            .padding = 0
+        },
+        .state = BoatState::Teleop,
+        .current_throttle = 0.5,
+        .current_rudder_angle = 0.1
+      };
       memcpy(send_buffer, &reply, sizeof(reply));
       rf95.send(send_buffer, sizeof(reply));
       rf95.waitPacketSent();

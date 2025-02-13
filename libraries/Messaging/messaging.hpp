@@ -1,6 +1,17 @@
 #include <stdint.h>
 
-enum MessageType: uint8_t {
+enum class StationState : uint8_t {
+    Off = 0,
+    Teleop = 1
+};
+
+enum class BoatState : uint8_t {
+    Off = 0,
+    Teleop = 1,
+    Recovery = 2
+};
+
+enum class MessageType: uint8_t {
     Command = 0,
     Reply = 1
 };
@@ -12,6 +23,7 @@ struct Header {
     MessageType type;
     uint8_t source_id;
     uint8_t dest_id;
+    uint8_t padding;
 };
 
 struct CommandMessage {
@@ -22,6 +34,7 @@ struct CommandMessage {
 
 struct ReplyMessage {
     Header header;
-    float heading;
-    float speed;
+    BoatState state;
+    float current_throttle;
+    float current_rudder_angle;
 };
