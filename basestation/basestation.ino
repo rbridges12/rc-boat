@@ -7,6 +7,7 @@
 constexpr int RFM95_CS = 10;
 constexpr int RFM95_RST = 2;
 constexpr int RFM95_INT = 3;
+constexpr int LED = 13;
 constexpr float RF95_FREQ = 915.0;
 constexpr uint8_t DEVICE_ID = 0;
 constexpr uint8_t BOAT_ID = 1;
@@ -17,7 +18,7 @@ constexpr char THROTTLE_DOWN_KEY = 's';
 constexpr char RUDDER_LEFT_KEY = 'a';
 constexpr char RUDDER_RIGHT_KEY = 'd';
 
-constexpr uint64_t CMD_TX_INTERVAL = 100;  // ms
+constexpr uint64_t CMD_TX_INTERVAL = 1000;  // ms
 constexpr uint64_t REPLY_TIMEOUT = 1000;    // ms
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
@@ -33,6 +34,7 @@ uint64_t last_send_time = 0;
 uint64_t last_recv_time = 0;
 
 void setup() {
+  pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
   digitalWrite(RFM95_RST, HIGH);
 
@@ -69,8 +71,10 @@ void loop() {
   bool received = false;
   ReplyMessage reply;
   if (rf95.available()) {
+    // Serial.println("Received message");
     uint8_t len = sizeof(receive_buffer);
     if (rf95.recv(receive_buffer, &len)) {
+      Serial.println(sizeof(ReplyMessage));
       RH_RF95::printBuffer("Received: ", receive_buffer, len);
       if (len >= sizeof(Header)) {
         Header header;
@@ -94,11 +98,11 @@ void loop() {
             Serial.print(", and rudder angle ");
             Serial.println(reply.current_rudder_angle);
           } else {
-            // Serial.println("Received message is too short for ReplyMessage");
+            Serial.println("Received message is too short for ReplyMessage");
           }
         } else {
-          // Serial.print("Received message with unknown type ");
-          // Serial.println(header.type);
+          Serial.print("Received message with unknown type ");
+          Serial.println((int)header.type);
         }
       }
     }
@@ -107,11 +111,11 @@ void loop() {
   switch (state) {
   case StationState::Off: {
     if (Serial.available()) {
-      Serial.println("reading input");
+      // Serial.println("reading input");
       char c = Serial.read();
-      Serial.println(c);
-      Serial.println((int)c);
-      Serial.println((int)TOGGLE_ENABLE_KEY);
+      // Serial.println(c);
+      // Serial.println((int)c);
+      // Serial.println((int)TOGGLE_ENABLE_KEY);
       if (c == TOGGLE_ENABLE_KEY) {
         state = StationState::Teleop;
         delay(100);

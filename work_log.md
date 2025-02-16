@@ -27,3 +27,8 @@
 - tried testing basestation code, messages aren't parsing correctly between arduino uno and teensy 4.1, probably some kind of struct packing issue between 8bit and 32bit processors
 - fixed struct packing issue by adding a dummy byte
 - basestation not receiving telemetry messages for some reason
+
+## 2/16/25
+- wrote initial boat code
+- fixed basestation not receiving reply messages by reducing Tx rate (need to investigate this)
+- working basic state machines for both basestation and boat code communicating with each other

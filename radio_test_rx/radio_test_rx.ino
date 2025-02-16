@@ -139,14 +139,15 @@ void loop() {
             .dest_id = header.source_id,
             .padding = 0
         },
-        .state = BoatState::Teleop,
         .current_throttle = 0.5,
-        .current_rudder_angle = 0.1
+        .current_rudder_angle = 0.1,
+        .state = BoatState::Teleop
       };
       memcpy(send_buffer, &reply, sizeof(reply));
       rf95.send(send_buffer, sizeof(reply));
       rf95.waitPacketSent();
       Serial.println("Sent a reply");
+    //   RH_RF95::printBuffer("Sent: ", send_buffer, sizeof(reply));
       digitalWrite(LED, LOW);
     } else {
       Serial.println("Receive failed");

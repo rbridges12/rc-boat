@@ -34,7 +34,10 @@ struct CommandMessage {
 
 struct ReplyMessage {
     Header header;
-    BoatState state;
     float current_throttle;
     float current_rudder_angle;
+    BoatState state;
+    uint8_t padding[3];
 };
+
+constexpr int test = sizeof(Header);
