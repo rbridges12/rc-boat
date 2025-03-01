@@ -2,27 +2,26 @@
 #include <Arduino.h>
 #include <RH_RF95.h>
 #include <SPI.h>
+// #include <Servo.h>
+#include <PWMServo.h>
 #include <messaging.hpp>
 
-constexpr int RFM95_CS = 10;
+// pins
+constexpr int RFM95_CS = 8;
 constexpr int RFM95_RST = 2;
 constexpr int RFM95_INT = 3;
-constexpr int LED = 13;
+constexpr int LED = 7;
+constexpr int SERVO_PIN = 10;
+constexpr int ESC_THROTTLE_PIN =9;
+
 constexpr float RF95_FREQ = 915.0;
 constexpr uint8_t DEVICE_ID = 1;
 constexpr uint8_t BASESTATION_ID = 0;
-
-// constexpr char TOGGLE_ENABLE_KEY = ' ';
-// constexpr char THROTTLE_UP_KEY = 'w';
-// constexpr char THROTTLE_DOWN_KEY = 's';
-// constexpr char RUDDER_LEFT_KEY = 'a';
-// constexpr char RUDDER_RIGHT_KEY = 'd';
-
-// constexpr uint64_t CMD_TX_INTERVAL = 1000;  // ms
 constexpr uint64_t CMD_TIMEOUT = 1200;    // ms
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
-// StationState state = StationState::Off;
+PWMServo rudder_servo;
+PWMServo esc;
 BoatState state = BoatState::Off;
 float current_throttle = 0.0;
 float current_rudder_angle = 0.0;
@@ -33,6 +32,14 @@ uint8_t receive_buffer[RH_RF95_MAX_MESSAGE_LEN];
 uint64_t last_send_time = 0;
 uint64_t last_recv_time = 0;
 
+void initialize_esc() {
+  esc.attach(ESC_THROTTLE_PIN, 1000, 2000);
+  Serial.println("Initializing ESC");
+  esc.write(0);
+  delay(5000);
+  Serial.println("ESC initialized");
+}
+
 void setup() {
   pinMode(LED, OUTPUT);
   pinMode(RFM95_RST, OUTPUT);
@@ -42,6 +49,9 @@ void setup() {
     ;
   Serial.begin(9600);
   delay(100);
+
+  initialize_esc();
+  rudder_servo.attach(SERVO_PIN);
 
   // manual reset
   digitalWrite(RFM95_RST, LOW);
@@ -116,12 +126,20 @@ void loop() {
   }
   case BoatState::Teleop: {
     if (received) {
+      digitalWrite(LED, HIGH);
+      delay(10);
+      digitalWrite(LED, LOW);
         current_throttle = cmd.throttle;
         current_rudder_angle = cmd.rudder_angle;
         Serial.print("executing command: ");
         Serial.print(current_throttle);
         Serial.print(" ");
         Serial.println(current_rudder_angle);
+        int angle = map((int)current_throttle, 0, 100, 0, 180);
+        Serial.print("esc angle: ");
+        Serial.println(angle);
+        esc.write(angle);
+        rudder_servo.write((int)current_rudder_angle);
 
         // send reply message
         uint32_t time_sec = millis() / 1000;
@@ -147,6 +165,8 @@ void loop() {
         Serial.println("boat failed to receive command after timeout, transitioning to recovery");
         state = BoatState::Recovery;
         Serial.println("cancelling all commands");
+        esc.write(0);
+        rudder_servo.write(90);
     }
     break;
   }

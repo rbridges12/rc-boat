@@ -32,3 +32,15 @@
 - wrote initial boat code
 - fixed basestation not receiving reply messages by reducing Tx rate (need to investigate this)
 - working basic state machines for both basestation and boat code communicating with each other
+
+## 2/17/25 - 2/27/25
+- designed and 3D printed test case for radio
+- initial radio range communication test
+- picked and bought brushless motor, ESC, LiPo battery + charger, servos, and propeller shaft
+- designed motor and prop shaft mount in CAD
+- tested servo and brushless motor control using arduino
+- started boat hull design in CAD
+
+## 2/28/25
+- wrote code to initialize and control brushless ESC and servo
+- wired up and tested boat testbed with radio servo and ESC, all powered by ESC BEC, tested teleop motor and servo control

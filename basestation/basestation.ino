@@ -20,6 +20,10 @@ constexpr char RUDDER_RIGHT_KEY = 'd';
 
 constexpr uint64_t CMD_TX_INTERVAL = 1000;  // ms
 constexpr uint64_t REPLY_TIMEOUT = 1000;    // ms
+constexpr float MIN_THROTTLE = 0.0;
+constexpr float MAX_THROTTLE = 100.0;
+constexpr float MIN_RUDDER_ANGLE = 0.0;
+constexpr float MAX_RUDDER_ANGLE = 180.0;
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 StationState state = StationState::Off;
@@ -32,6 +36,7 @@ uint8_t send_buffer[RH_RF95_MAX_MESSAGE_LEN];
 uint8_t receive_buffer[RH_RF95_MAX_MESSAGE_LEN];
 uint64_t last_send_time = 0;
 uint64_t last_recv_time = 0;
+bool led_state = false;
 
 void setup() {
   pinMode(LED, OUTPUT);
@@ -74,8 +79,8 @@ void loop() {
     // Serial.println("Received message");
     uint8_t len = sizeof(receive_buffer);
     if (rf95.recv(receive_buffer, &len)) {
-      Serial.println(sizeof(ReplyMessage));
-      RH_RF95::printBuffer("Received: ", receive_buffer, len);
+      // Serial.println(sizeof(ReplyMessage));
+      // RH_RF95::printBuffer("Received: ", receive_buffer, len);
       if (len >= sizeof(Header)) {
         Header header;
         memcpy(&header, receive_buffer, sizeof(header));
@@ -83,20 +88,22 @@ void loop() {
           if (len >= sizeof(ReplyMessage)) {
             memcpy(&reply, receive_buffer, sizeof(reply));
             received = true;
+            led_state = !led_state;
+            digitalWrite(LED, led_state);
             last_recv_time = millis();
             boat_state = reply.state;
-            Serial.print("Received reply from ");
-            Serial.print(reply.header.source_id);
-            Serial.print(" at ");
-            Serial.print(reply.header.time_sec);
-            Serial.print(".");
-            Serial.print(reply.header.time_nsec);
-            Serial.print(" with state ");
-            Serial.print(static_cast<int>(reply.state));
-            Serial.print(", throttle ");
-            Serial.print(reply.current_throttle);
-            Serial.print(", and rudder angle ");
-            Serial.println(reply.current_rudder_angle);
+            // Serial.print("Received reply from ");
+            // Serial.print(reply.header.source_id);
+            // Serial.print(" at ");
+            // Serial.print(reply.header.time_sec);
+            // Serial.print(".");
+            // Serial.print(reply.header.time_nsec);
+            // Serial.print(" with state ");
+            // Serial.print(static_cast<int>(reply.state));
+            // Serial.print(", throttle ");
+            // Serial.print(reply.current_throttle);
+            // Serial.print(", and rudder angle ");
+            // Serial.println(reply.current_rudder_angle);
           } else {
             Serial.println("Received message is too short for ReplyMessage");
           }
@@ -105,6 +112,8 @@ void loop() {
           Serial.println((int)header.type);
         }
       }
+      Serial.print("RSSI: ");
+      Serial.println(rf95.lastRssi(), DEC);
     }
   }
 
@@ -134,19 +143,23 @@ void loop() {
         state = StationState::Off;
         break;
       case THROTTLE_UP_KEY:
-        current_throttle += 0.1;
+        if (current_throttle < MAX_THROTTLE)
+          current_throttle += 5;
         command_changed = true;
         break;
       case THROTTLE_DOWN_KEY:
-        current_throttle -= 0.1;
+        if (current_throttle > MIN_THROTTLE)
+          current_throttle -= 5;
         command_changed = true;
         break;
       case RUDDER_LEFT_KEY:
-        current_rudder_angle -= 0.1;
+        if (current_rudder_angle > MIN_RUDDER_ANGLE)
+          current_rudder_angle -= 5;
         command_changed = true;
         break;
       case RUDDER_RIGHT_KEY:
-        current_rudder_angle += 0.1;
+        if (current_rudder_angle < MAX_RUDDER_ANGLE)
+          current_rudder_angle += 5;
         command_changed = true;
         break;
       }
@@ -177,10 +190,11 @@ void loop() {
     }
 
     // check for reply timeout
-    // if (millis() - last_recv_time > REPLY_TIMEOUT) {
-    //   boat_state = BoatState::Recovery;
-    //   Serial.println("Warning: boat failed to reply after timeout");
-    // }
+    if (millis() - last_recv_time > REPLY_TIMEOUT) {
+      boat_state = BoatState::Recovery;
+      digitalWrite(LED, LOW);
+      // Serial.println("Warning: boat failed to reply after timeout");
+    }
     break;
   }
   }
