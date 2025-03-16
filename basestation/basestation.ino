@@ -20,16 +20,16 @@ constexpr char RUDDER_RIGHT_KEY = 'd';
 
 constexpr uint64_t CMD_TX_INTERVAL = 1000;  // ms
 constexpr uint64_t REPLY_TIMEOUT = 1000;    // ms
-constexpr float MIN_THROTTLE = 0.0;
-constexpr float MAX_THROTTLE = 100.0;
-constexpr float MIN_RUDDER_ANGLE = 0.0;
-constexpr float MAX_RUDDER_ANGLE = 180.0;
+constexpr float MIN_THROTTLE = 5.0;
+constexpr float MAX_THROTTLE = 20.0;
+constexpr float MIN_RUDDER_ANGLE = 50.0;
+constexpr float MAX_RUDDER_ANGLE = 130.0;
 
 RH_RF95 rf95(RFM95_CS, RFM95_INT);
 StationState state = StationState::Off;
 BoatState boat_state = BoatState::Off;
-float current_throttle = 0.0;
-float current_rudder_angle = 0.0;
+float current_throttle = 5.0;
+float current_rudder_angle = 90.0;
 
 uint32_t sequence_number = 0;
 uint8_t send_buffer[RH_RF95_MAX_MESSAGE_LEN];
@@ -144,22 +144,22 @@ void loop() {
         break;
       case THROTTLE_UP_KEY:
         if (current_throttle < MAX_THROTTLE)
-          current_throttle += 5;
+          current_throttle += 1;
         command_changed = true;
         break;
       case THROTTLE_DOWN_KEY:
         if (current_throttle > MIN_THROTTLE)
-          current_throttle -= 5;
+          current_throttle -= 1;
         command_changed = true;
         break;
       case RUDDER_LEFT_KEY:
         if (current_rudder_angle > MIN_RUDDER_ANGLE)
-          current_rudder_angle -= 5;
+          current_rudder_angle -= 1;
         command_changed = true;
         break;
       case RUDDER_RIGHT_KEY:
         if (current_rudder_angle < MAX_RUDDER_ANGLE)
-          current_rudder_angle += 5;
+          current_rudder_angle += 1;
         command_changed = true;
         break;
       }

@@ -24,7 +24,7 @@ PWMServo rudder_servo;
 PWMServo esc;
 BoatState state = BoatState::Off;
 float current_throttle = 0.0;
-float current_rudder_angle = 0.0;
+float current_rudder_angle = 90.0;
 
 uint32_t sequence_number = 0;
 uint8_t send_buffer[RH_RF95_MAX_MESSAGE_LEN];

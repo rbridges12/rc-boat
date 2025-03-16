@@ -44,3 +44,20 @@
 ## 2/28/25
 - wrote code to initialize and control brushless ESC and servo
 - wired up and tested boat testbed with radio servo and ESC, all powered by ESC BEC, tested teleop motor and servo control
+
+## 2/29/25 - 3/13/25
+- printed test motor mount
+- printed very simple hull shape for scale
+- finished boat hull design v1 in CAD
+- printed boat hull v1
+
+## 3/14/25
+- removed support material and cleaned up boat hull
+- rough test assembly of boat halves, motor mount, and rudder assembly with hot glue
+- attached motor and servo, aligned prop shaft
+
+## 3/15/25
+- attached servo pushrod
+- connected electronics and tested remote control with hardware attached to boat
+- tuned control limits
+- submerged back of boat in the sink and tested propeller and rudder functionality in water
