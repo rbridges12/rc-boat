@@ -1,6 +1,7 @@
 
 #include <Arduino.h>
-#include <RH_RF95.h>
+// #include <RH_RF95.h>
+#include <LoRa.h>
 #include <SPI.h>
 #include <messaging.hpp>
 
@@ -25,106 +26,66 @@ constexpr float MAX_THROTTLE = 20.0;
 constexpr float MIN_RUDDER_ANGLE = 50.0;
 constexpr float MAX_RUDDER_ANGLE = 130.0;
 
-RH_RF95 rf95(RFM95_CS, RFM95_INT);
+// RH_RF95 rf95(RFM95_CS, RFM95_INT);
 StationState state = StationState::Off;
 BoatState boat_state = BoatState::Off;
 float current_throttle = 5.0;
 float current_rudder_angle = 90.0;
 
 uint32_t sequence_number = 0;
-uint8_t send_buffer[RH_RF95_MAX_MESSAGE_LEN];
-uint8_t receive_buffer[RH_RF95_MAX_MESSAGE_LEN];
+uint8_t send_buffer[255];
+uint8_t receive_buffer[255];
 uint64_t last_send_time = 0;
 uint64_t last_recv_time = 0;
 bool led_state = false;
 
 void setup() {
   pinMode(LED, OUTPUT);
-  pinMode(RFM95_RST, OUTPUT);
-  digitalWrite(RFM95_RST, HIGH);
+  // pinMode(RFM95_RST, OUTPUT);
+  // digitalWrite(RFM95_RST, HIGH);
 
-  while (!Serial)
-    ;
   Serial.begin(9600);
+  while (!Serial);
   delay(100);
 
-  // manual reset
-  digitalWrite(RFM95_RST, LOW);
-  delay(10);
-  digitalWrite(RFM95_RST, HIGH);
-  delay(10);
+  // // manual reset
+  // digitalWrite(RFM95_RST, LOW);
+  // delay(10);
+  // digitalWrite(RFM95_RST, HIGH);
+  // delay(10);
+  LoRa.setPins(RFM95_CS, RFM95_RST, RFM95_INT);
 
   //   init and configure radio
-  while (!rf95.init()) {
-    Serial.println("LoRa radio init failed");
-    while (1)
-      ;
+  // while (!rf95.init()) {
+  //   Serial.println("LoRa radio init failed");
+  //   while (1)
+  //     ;
+  // }
+  if (!LoRa.begin(915E6)) {
+      Serial.println("LoRa radio init failed");
+    while (true);
   }
-  Serial.println("LoRa radio init OK!");
-  if (!rf95.setFrequency(RF95_FREQ)) {
-    Serial.println("setFrequency failed");
-    while (1)
-      ;
-  }
-  Serial.print("Set Freq to: ");
-  Serial.println(RF95_FREQ);
-  rf95.setTxPower(23, false);
+  
+  LoRa.onReceive(onReceive);
+  LoRa.receive();
+  Serial.println("LoRa init succeeded.");
+
+  // Serial.println("LoRa radio init OK!");
+  // if (!rf95.setFrequency(RF95_FREQ)) {
+  //   Serial.println("setFrequency failed");
+  //   while (1)
+  //     ;
+  // }
+  // Serial.print("Set Freq to: ");
+  // Serial.println(RF95_FREQ);
+  // rf95.setTxPower(23, false);
 }
 
 void loop() {
-  // receive message from radio if available
-  bool received = false;
-  ReplyMessage reply;
-  if (rf95.available()) {
-    // Serial.println("Received message");
-    uint8_t len = sizeof(receive_buffer);
-    if (rf95.recv(receive_buffer, &len)) {
-      // Serial.println(sizeof(ReplyMessage));
-      // RH_RF95::printBuffer("Received: ", receive_buffer, len);
-      if (len >= sizeof(Header)) {
-        Header header;
-        memcpy(&header, receive_buffer, sizeof(header));
-        if (header.type == MessageType::Reply) {
-          if (len >= sizeof(ReplyMessage)) {
-            memcpy(&reply, receive_buffer, sizeof(reply));
-            received = true;
-            led_state = !led_state;
-            digitalWrite(LED, led_state);
-            last_recv_time = millis();
-            boat_state = reply.state;
-            // Serial.print("Received reply from ");
-            // Serial.print(reply.header.source_id);
-            // Serial.print(" at ");
-            // Serial.print(reply.header.time_sec);
-            // Serial.print(".");
-            // Serial.print(reply.header.time_nsec);
-            // Serial.print(" with state ");
-            // Serial.print(static_cast<int>(reply.state));
-            // Serial.print(", throttle ");
-            // Serial.print(reply.current_throttle);
-            // Serial.print(", and rudder angle ");
-            // Serial.println(reply.current_rudder_angle);
-          } else {
-            Serial.println("Received message is too short for ReplyMessage");
-          }
-        } else {
-          Serial.print("Received message with unknown type ");
-          Serial.println((int)header.type);
-        }
-      }
-      Serial.print("RSSI: ");
-      Serial.println(rf95.lastRssi(), DEC);
-    }
-  }
-
   switch (state) {
   case StationState::Off: {
     if (Serial.available()) {
-      // Serial.println("reading input");
       char c = Serial.read();
-      // Serial.println(c);
-      // Serial.println((int)c);
-      // Serial.println((int)TOGGLE_ENABLE_KEY);
       if (c == TOGGLE_ENABLE_KEY) {
         state = StationState::Teleop;
         delay(100);
@@ -183,9 +144,12 @@ void loop() {
       memcpy(send_buffer, &msg, sizeof(msg));
       // Serial.println(sizeof(CommandMessage));
       // RH_RF95::printBuffer("Sending: ", send_buffer, sizeof(msg));
-      rf95.send(send_buffer, sizeof(msg));
+      // rf95.send(send_buffer, sizeof(msg));
       // delay(10);
       // rf95.waitPacketSent();
+      LoRa.beginPacket();
+      LoRa.write(send_buffer, sizeof(msg));
+      LoRa.endPacket();
       last_send_time = millis();
     }
 
@@ -198,4 +162,49 @@ void loop() {
     break;
   }
   }
+}
+
+
+void onReceive(int packet_size) {
+  ReplyMessage reply;
+  Serial.print("Received message, size=");
+  Serial.println(packet_size);
+  if (packet_size == 0) return;
+  for (int i = 0; i < packet_size; i++) {
+    receive_buffer[i] = (uint8_t) LoRa.read();
+  }
+  if (packet_size >= sizeof(Header)) {
+    Header header;
+    memcpy(&header, receive_buffer, sizeof(header));
+    if (header.type == MessageType::Reply) {
+      if (packet_size >= sizeof(ReplyMessage)) {
+        memcpy(&reply, receive_buffer, sizeof(reply));
+        // received = true;
+        led_state = !led_state;
+        digitalWrite(LED, led_state);
+        last_recv_time = millis();
+        boat_state = reply.state;
+        Serial.print("Received reply from ");
+        Serial.print(reply.header.source_id);
+        Serial.print(" at ");
+        Serial.print(reply.header.time_sec);
+        Serial.print(".");
+        Serial.print(reply.header.time_nsec);
+        Serial.print(" with state ");
+        Serial.print(static_cast<int>(reply.state));
+        Serial.print(", throttle ");
+        Serial.print(reply.current_throttle);
+        Serial.print(", and rudder angle ");
+        Serial.println(reply.current_rudder_angle);
+      } else {
+        Serial.println("Received message is too short for ReplyMessage");
+      }
+    } else {
+      Serial.print("Received message with unknown type ");
+      Serial.println((int)header.type);
+    }
+  }
+    Serial.print("RSSI: ");
+    // Serial.println(rf95.lastRssi(), DEC);
+    Serial.println(LoRa.rssi(), DEC);
 }

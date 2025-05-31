@@ -37,11 +37,13 @@ pico_sdk_init()
 # Add executable. Default name is the project name, version 0.1
 
 add_executable(blink
-    blink.c
+    blink.cpp
+    LoRa.cpp
+    LoRa.hpp
     )
 
 # pull in common dependencies
-target_link_libraries(blink pico_stdlib)
+target_link_libraries(blink pico_stdlib hardware_spi)
 
 # enable usb output, disable uart output
 pico_enable_stdio_usb(blink 1)

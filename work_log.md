@@ -61,3 +61,18 @@
 - connected electronics and tested remote control with hardware attached to boat
 - tuned control limits
 - submerged back of boat in the sink and tested propeller and rudder functionality in water
+
+## 3/16/25 - 5/4/25
+- successful bathtub test with full rc functionality, no lid
+- several iterations of silicone sealing with lid
+- successful waterproofing test in bathtub with short full submersion
+- successful outdoor test at pond with somewhat choppy water, 10 min of continuous operation, minor water leaks that didn't affect functionality - V1 complete
+
+## 5/18/25-5/25/25
+- redid CAD from scratch with minor hull improvements and full catamaran structure
+- printed both hulls
+- assembled and waterproofed hulls with epoxy
+
+## 5/26/25-5/31/25
+- ported arduino LoRa library over to pico
+- successfully tested basic LoRa functionality on pico
